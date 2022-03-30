@@ -11,7 +11,11 @@ fn get_rdtsc_ratio(job_multiplier: u32) {
     let start_tick = get_rdtsc();
     let start_nanosec = SystemTime::now();
 
-    let ans = (0..10000).fold(0f64, |acc, x| acc + compute_node(x as f64, job_multiplier));
+    let x_s = (0..10000).collect::<Vec<u32>>();
+
+    let ans = x_s
+        .iter()
+        .fold(0f64, |acc, x| acc + compute_node(*x as f64, job_multiplier));
 
     let end_tick = get_rdtsc();
     let tick_diff = end_tick - start_tick;
