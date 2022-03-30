@@ -1,3 +1,5 @@
+pub mod lib;
+
 use num_format::{Locale, ToFormattedString};
 
 use std::env;
@@ -5,6 +7,11 @@ use std::time::SystemTime;
 
 fn get_rdtsc() -> u64 {
     unsafe { core::arch::x86_64::_rdtsc() }
+}
+
+#[test]
+fn test_compute() {
+    lib::compute_node(10);
 }
 
 fn get_rdtsc_ratio(job_multiplier: u128) {
