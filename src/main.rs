@@ -3,6 +3,7 @@ pub mod lib;
 use system_perf::{compute_node, get_rdtsc};
 
 use num_format::{Locale, ToFormattedString};
+use rayon::prelude::*;
 
 use std::env;
 use std::time::SystemTime;
@@ -13,9 +14,13 @@ fn get_rdtsc_ratio(job_multiplier: u32) {
 
     let x_s = (0..10000).collect::<Vec<u32>>();
 
-    let ans = x_s
-        .iter()
-        .fold(0f64, |acc, x| acc + compute_node(*x as f64, job_multiplier));
+    let ans: f64 = x_s
+        .par_iter()
+        .map(|x| {
+            // println!("{}", x);
+            compute_node(*x as f64, job_multiplier)
+        })
+        .sum();
 
     let end_tick = get_rdtsc();
     let tick_diff = end_tick - start_tick;
@@ -25,13 +30,12 @@ fn get_rdtsc_ratio(job_multiplier: u32) {
         .unwrap()
         .as_nanos();
 
-    let ratio = nano_diff as f64 / tick_diff as f64;
+    let ratio = tick_diff as f64 / nano_diff as f64;
 
     println!("ans: {}", ans);
-    println!("Tick Diff {}", tick_diff.to_formatted_string(&Locale::en));
     println!("Nano Diff {}", nano_diff.to_formatted_string(&Locale::en));
-    println!("Nano/tick ratio {}", ratio);
-    println!("Freq: {} Ghz", 1 as f64 / ratio);
+    println!("Tick Diff {}", tick_diff.to_formatted_string(&Locale::en));
+    println!("Freq: {} Ghz", ratio);
 }
 fn main() {
     let args: Vec<String> = env::args().collect();
