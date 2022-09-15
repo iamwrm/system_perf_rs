@@ -10,12 +10,17 @@ struct Args {
     /// Calculate to nth of the series sum
     #[clap(short, long, value_parser)]
     n: u32,
+    /// bench iterations
+    #[clap(short, long, value_parser, default_value_t = 10_000_000u64)]
+    iter_time: u64,
 }
 
 fn main() {
     let args = Args::parse();
 
+    dbg!(&args);
+
     println!("vesrion: {}", clap::crate_version!());
 
-    get_rdtsc_ratio(args.n);
+    get_rdtsc_ratio(args.n, args.iter_time);
 }
