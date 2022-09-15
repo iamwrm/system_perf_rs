@@ -13,7 +13,3 @@ libm = "0.2.5"
 
 [dev-dependencies]
 criterion = "0.4.0"
-
-[[bench]]
-name = "bench_entry"
-harness = false
