@@ -82,5 +82,5 @@ pub fn get_rdtsc_ratio(job_multiplier: u32) {
 
     println!("Nano Diff {}", nano_diff.to_formatted_string(&Locale::en));
     println!("Tick Diff {}", tick_diff.to_formatted_string(&Locale::en));
-    println!("Freq: {} Ghz", ratio);
+    println!("Freq: {:.2} Ghz", ratio);
 }

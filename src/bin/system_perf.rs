@@ -4,15 +4,18 @@ use system_perf::get_rdtsc_ratio;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[clap(name = clap::crate_name!(), about = clap::crate_description!())]
+#[clap(author = clap::crate_authors!(), version = clap::crate_version!())]
 struct Args {
-    /// length to compute
-    #[clap(short, long, value_parser, default_value_t = 1)]
-    length: u32,
+    /// Calculate to nth of the series sum
+    #[clap(short, long, value_parser)]
+    n: u32,
 }
 
 fn main() {
     let args = Args::parse();
 
-    get_rdtsc_ratio(args.length);
+    println!("vesrion: {}", clap::crate_version!());
+
+    get_rdtsc_ratio(args.n);
 }
