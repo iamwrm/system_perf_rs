@@ -1,8 +1,7 @@
-mod taylor;
+pub mod taylor;
 use std::time::SystemTime;
 
 use num_format::{Locale, ToFormattedString};
-// use rayon::prelude::*;
 
 fn get_rdtsc() -> u64 {
     unsafe { core::arch::x86_64::_rdtsc() }
@@ -13,20 +12,47 @@ fn test_compute() {
     compute_node2(10);
 }
 
+fn black_box<T>(dummy: T) -> T {
+    unsafe { std::ptr::read_volatile(&dummy) }
+}
+
+fn my_bench<F>(funct_to_bench: F)
+where
+    F: Fn(),
+{
+    let start_nanosec = SystemTime::now();
+
+    let iter_time = 1_000_000_0;
+
+    (1..iter_time).for_each(|_| {
+        funct_to_bench();
+    });
+
+    let nano_diff = SystemTime::now()
+        .duration_since(start_nanosec)
+        .unwrap()
+        .as_nanos()
+        / iter_time as u128;
+    println!("{} ns", nano_diff.to_formatted_string(&Locale::en));
+}
+
 fn compute_node2(job_multiplier: u32) {
     let x = 0.38f64;
-    let n_s = (0..10000).collect::<Vec<i32>>();
+    let job_multiplier = job_multiplier as i32;
+    let n_s = (0..job_multiplier).collect::<Vec<i32>>();
 
-    let mut taylor_ans = vec![];
-
-    let ans: f64 = n_s.iter().map(|n| taylor::series_1_over_1mx(x, *n)).sum();
-    taylor_ans.push(ans);
-    let ans: f64 = n_s.iter().map(|n| taylor::series_e(x, *n)).sum();
-    taylor_ans.push(ans);
-    let ans: f64 = n_s.iter().map(|n| taylor::series_cos(x, *n)).sum();
-    taylor_ans.push(ans);
-
-    taylor_ans.iter().for_each(|a| println!("ans: {}", *a));
+    my_bench(|| {
+        let ans: f64 = n_s.iter().map(|n| taylor::series_1_over_1mx(x, *n)).sum();
+        black_box(ans);
+    });
+    my_bench(|| {
+        let ans: f64 = n_s.iter().map(|n| taylor::series_e(x, *n)).sum();
+        black_box(ans);
+    });
+    my_bench(|| {
+        let ans: f64 = n_s.iter().map(|n| taylor::series_cos(x, *n)).sum();
+        black_box(ans);
+    });
 }
 
 pub fn get_rdtsc_ratio(job_multiplier: u32) {
