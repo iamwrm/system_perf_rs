@@ -7,11 +7,6 @@ fn get_rdtsc() -> u64 {
     unsafe { core::arch::x86_64::_rdtsc() }
 }
 
-#[test]
-fn test_compute() {
-    compute_node2(10);
-}
-
 fn black_box<T>(dummy: T) -> T {
     unsafe { std::ptr::read_volatile(&dummy) }
 }
