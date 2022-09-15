@@ -7,3 +7,5 @@ tasks:
       rustup target add x86_64-unknown-linux-musl
       cargo build
       cargo build --release
+      cargo install cargo-edit
+      make run
