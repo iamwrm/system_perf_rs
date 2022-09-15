@@ -1,0 +1,24 @@
+stages:          
+  - build
+
+build:       
+  image: rust:1.63.0-slim
+  stage: build
+  timeout: 30 minutes
+  script:
+    - uname -a 
+    - lscpu
+    - apt update && apt install -y git make
+    - rustup target add x86_64-unknown-linux-musl
+    - rustup component add clippy
+    - cargo build --release --target=x86_64-unknown-linux-musl 
+    - cargo test --target=x86_64-unknown-linux-musl 
+    - cargo clippy
+
+code:       
+  image: ubuntu:20.04
+  stage: build
+  timeout: 10 minutes
+  script:
+    - apt update && apt install -y cloc
+    - cloc src
