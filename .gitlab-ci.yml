@@ -5,6 +5,9 @@ build:
   image: rust:1.63.0-slim
   stage: build
   timeout: 30 minutes
+  artifacts:
+    paths:
+      - target/x86_64-unknown-linux-musl/release/system_perf
   script:
     - uname -a 
     - lscpu
@@ -14,6 +17,10 @@ build:
     - cargo build --release --target=x86_64-unknown-linux-musl 
     - cargo test --target=x86_64-unknown-linux-musl 
     - cargo clippy
+    - cargo test
+    - cargo bench
+    - make run
+
 
 code:       
   image: ubuntu:20.04
