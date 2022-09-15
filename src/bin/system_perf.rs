@@ -1,12 +1,10 @@
-pub mod lib;
-
-use system_perf::{compute_node, get_rdtsc};
+use std::env;
+use std::time::SystemTime;
 
 use num_format::{Locale, ToFormattedString};
 use rayon::prelude::*;
 
-use std::env;
-use std::time::SystemTime;
+use system_perf::{compute_node, get_rdtsc};
 
 fn get_rdtsc_ratio(job_multiplier: u32) {
     let start_tick = get_rdtsc();
