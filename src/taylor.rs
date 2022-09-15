@@ -55,7 +55,6 @@ pub fn series_cos(x: f64, n: i32) -> f64 {
     if n.is_odd() {
         ans = -ans;
     }
-    dbg!(n, up, down, ans);
     ans
 }
 #[test]

@@ -5,6 +5,9 @@ build:
   image: rust:1.63.0-slim
   stage: build
   timeout: 30 minutes
+  artifacts:
+    paths:
+      - target/x86_64-unknown-linux-musl/release/system_perf
   script:
     - uname -a 
     - lscpu

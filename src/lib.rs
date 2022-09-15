@@ -11,7 +11,7 @@ fn black_box<T>(dummy: T) -> T {
     unsafe { std::ptr::read_volatile(&dummy) }
 }
 
-fn my_bench<F>(funct_to_bench: F)
+fn my_bench<F>(funct_to_bench: F) -> u128
 where
     F: Fn(),
 {
@@ -29,6 +29,7 @@ where
         .as_nanos()
         / iter_time as u128;
     println!("{} ns", nano_diff.to_formatted_string(&Locale::en));
+    nano_diff
 }
 
 fn compute_node2(job_multiplier: u32) {
@@ -36,18 +37,31 @@ fn compute_node2(job_multiplier: u32) {
     let job_multiplier = job_multiplier as i32;
     let n_s = (0..job_multiplier).collect::<Vec<i32>>();
 
-    my_bench(|| {
+    let mut ans_v = vec![];
+
+    ans_v.push(my_bench(|| {
         let ans: f64 = n_s.iter().map(|n| taylor::series_1_over_1mx(x, *n)).sum();
         black_box(ans);
-    });
-    my_bench(|| {
+    }));
+    ans_v.push(my_bench(|| {
         let ans: f64 = n_s.iter().map(|n| taylor::series_e(x, *n)).sum();
         black_box(ans);
-    });
-    my_bench(|| {
+    }));
+    ans_v.push(my_bench(|| {
         let ans: f64 = n_s.iter().map(|n| taylor::series_cos(x, *n)).sum();
         black_box(ans);
-    });
+    }));
+    let mean = geometric_mean(&ans_v);
+    println!("Geo Mean: {} ns", mean);
+}
+
+fn geometric_mean(v: &[u128]) -> u128 {
+    let mut ans = 1u128;
+    for i in v {
+        ans *= i;
+    }
+    let ans_f = ans as f64;
+    ans_f.powf(1f64 / v.len() as f64) as u128
 }
 
 pub fn get_rdtsc_ratio(job_multiplier: u32) {
