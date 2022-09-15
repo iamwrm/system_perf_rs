@@ -3,19 +3,9 @@ use std::time::SystemTime;
 use num_format::{Locale, ToFormattedString};
 use rayon::prelude::*;
 
-pub fn compute_node(start: f64, iter_time: u32) -> f64 {
-    let mut x = start;
-    for _ in 0..2u64.pow(iter_time * 2) {
-        for _ in 0..iter_time {
-            x = 1f64 / (1f64 - 1f64 / x);
-        }
-    }
-    x
-}
-
 #[test]
 fn test_compute() {
-    compute_node(3f64, 10);
+    compute_node(3, 10);
 }
 
 fn get_rdtsc() -> u64 {
@@ -26,13 +16,13 @@ pub fn get_rdtsc_ratio(job_multiplier: u32) {
     let start_tick = get_rdtsc();
     let start_nanosec = SystemTime::now();
 
-    let x_s = (0..10000).collect::<Vec<u32>>();
+    let x_s = (0..10000).collect::<Vec<u64>>();
 
     let ans: f64 = x_s
         .par_iter()
         .map(|x| {
             // println!("{}", x);
-            compute_node(*x as f64, job_multiplier)
+            compute_node(*x, job_multiplier)
         })
         .sum();
 
@@ -50,4 +40,12 @@ pub fn get_rdtsc_ratio(job_multiplier: u32) {
     println!("Nano Diff {}", nano_diff.to_formatted_string(&Locale::en));
     println!("Tick Diff {}", tick_diff.to_formatted_string(&Locale::en));
     println!("Freq: {} Ghz", ratio);
+}
+
+pub fn compute_node(x: u64, _: u32) -> f64 {
+    let mut demoniator = 1;
+    for i in 1..x {
+        demoniator *= i;
+    }
+    1f64 / demoniator as f64
 }

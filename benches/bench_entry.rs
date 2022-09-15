@@ -6,7 +6,9 @@ mod lib;
 use lib::compute_node;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("fib 20", |b| b.iter(|| compute_node(3f64, black_box(10))));
+    c.bench_function("compute f(3)", |b| {
+        b.iter(|| compute_node(black_box(3u64), black_box(10)))
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
