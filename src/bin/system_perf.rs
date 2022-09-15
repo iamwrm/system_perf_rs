@@ -9,7 +9,7 @@ use system_perf::get_rdtsc_ratio;
 struct Args {
     /// Calculate to nth of the series sum
     #[clap(short, long, value_parser)]
-    n: u32,
+    n: i32,
     /// bench iterations
     #[clap(short, long, value_parser, default_value_t = 10_000_000u64)]
     iter_time: u64,

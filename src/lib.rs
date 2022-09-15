@@ -30,34 +30,28 @@ where
     nano_diff
 }
 
-fn compute_node(n: u32, iter_time: u64) {
+macro_rules! bench_cl {
+    ($series_func:expr,$ans_v:expr,$n_v:expr,$iter_time:expr,$x:expr) => {{
+        $ans_v.push(my_bench(
+            || {
+                let ans: f64 = $n_v.iter().map(|n| $series_func($x, *n)).sum();
+                black_box(ans);
+            },
+            $iter_time,
+        ));
+    }};
+}
+
+fn compute_node(n: i32, iter_time: u64) {
     let x = 0.38f64;
-    let n = n as i32;
     let n_v = (0..n).collect::<Vec<i32>>();
 
     let mut ans_v = vec![];
 
-    ans_v.push(my_bench(
-        || {
-            let ans: f64 = n_v.iter().map(|n| taylor::series_1_over_1mx(x, *n)).sum();
-            black_box(ans);
-        },
-        iter_time,
-    ));
-    ans_v.push(my_bench(
-        || {
-            let ans: f64 = n_v.iter().map(|n| taylor::series_e(x, *n)).sum();
-            black_box(ans);
-        },
-        iter_time,
-    ));
-    ans_v.push(my_bench(
-        || {
-            let ans: f64 = n_v.iter().map(|n| taylor::series_cos(x, *n)).sum();
-            black_box(ans);
-        },
-        iter_time,
-    ));
+    bench_cl!(taylor::series_1_over_1mx, ans_v, n_v, iter_time, x);
+    bench_cl!(taylor::series_e, ans_v, n_v, iter_time, x);
+    bench_cl!(taylor::series_cos, ans_v, n_v, iter_time, x);
+
     let mean = geometric_mean(&ans_v);
     println!("Geo Mean: {} ns", mean);
 }
@@ -71,7 +65,7 @@ fn geometric_mean(v: &[u128]) -> u128 {
     ans_f.powf(1f64 / v.len() as f64) as u128
 }
 
-pub fn get_rdtsc_ratio(n: u32, iter_time: u64) {
+pub fn get_rdtsc_ratio(n: i32, iter_time: u64) {
     let start_tick = get_rdtsc();
     let start_nanosec = SystemTime::now();
 
