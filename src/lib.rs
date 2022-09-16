@@ -3,8 +3,13 @@ use std::time::SystemTime;
 
 use num_format::{Locale, ToFormattedString};
 
+#[cfg(target_arch = "x86_64")]
 fn get_rdtsc() -> u64 {
     unsafe { core::arch::x86_64::_rdtsc() }
+}
+#[cfg(target_arch = "aarch64")]
+fn get_rdtsc() -> u64 {
+    0
 }
 
 fn black_box<T>(dummy: T) -> T {
