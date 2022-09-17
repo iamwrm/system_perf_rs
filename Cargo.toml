@@ -24,6 +24,4 @@ harness = false
 lto = 'thin'
 opt-level = 3
 
-[build]
-rustflags = ["-C", "target-cpu=native"]
 
