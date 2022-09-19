@@ -29,3 +29,16 @@ code:
   script:
     - apt update && apt install -y cloc
     - cloc src
+
+build_centos7:       
+  image: centos:7
+  stage: build
+  timeout: 30 minutes
+  script:
+    - cat /etc/*release
+    - lscpu
+    - yum update -y && yum install -y epel-release && yum update -y && yum install -y curl git make
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - rustup target add x86_64-unknown-linux-musl
+    - cd hellosimd
+    - make run
