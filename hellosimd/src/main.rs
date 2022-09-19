@@ -1,10 +1,29 @@
 #![feature(portable_simd)]
-use core_simd::*;
-
 use std::time;
 
+use clap::Parser;
+
+use core_simd::*;
+
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[clap(name = clap::crate_name!(), about = clap::crate_description!())]
+#[clap(author = clap::crate_authors!(), version = clap::crate_version!())]
+struct Args {
+    /// Calculate to nth of the series sum
+    #[clap(short, long, value_parser, default_value_t = 1_000u64)]
+    arr_size: u64,
+    /// bench iterations
+    #[clap(short, long, value_parser, default_value_t = 1_000_000u64)]
+    iter_time: u64,
+}
+
 fn main() {
-    run_simd2();
+    let args = Args::parse();
+
+    dbg!(&args);
+
+    run_simd2(args.arr_size, args.iter_time);
 }
 
 #[allow(dead_code)]
@@ -12,46 +31,22 @@ fn black_box<T>(dummy: T) -> T {
     unsafe { std::ptr::read_volatile(&dummy) }
 }
 
-fn get_vec() -> Vec<f32> {
-    let cap = 1000;
-    let a = vec![0.0; cap];
-    a
-}
-
-fn bench<F>(f_to_bench: F, name: &str, iter_times: u64)
+fn bench<F>(arr_length: u64, f_to_bench: F, name: &str, iter_times: u64)
 where
     F: Fn(&mut Vec<f32>, u64) -> (),
 {
-    let mut a = get_vec();
+    let mut a = vec![0.0; arr_length.try_into().unwrap()];
     let t1 = time::Instant::now();
     f_to_bench(&mut a, iter_times);
-    let idx = 999;
+    let idx = a.len() - 1;
     println!("a[{}] = {}", idx, a[idx]);
     println!("{}: {:?}\n", name, t1.elapsed());
     // black_box(a[idx]);
 }
 
-fn run_simd2() {
-    let iter_time = 1000_000;
-    bench(scaler, "scalar", iter_time);
-    bench(simd_vector, "simd", iter_time);
-}
-
-#[allow(dead_code)]
-fn run_simd1() {
-    let a = f32x16::splat(10.0);
-    let arr = {
-        let mut arr = [0.0; 16];
-        for i in 0..16 {
-            arr[i] = i as f32;
-        }
-        arr
-    };
-    let mut b = f32x16::from_array(arr);
-    for _ in 0..100 {
-        b = a + b;
-    }
-    println!("{:?}", a + b);
+fn run_simd2(arr_length: u64, iter_time: u64) {
+    bench(arr_length, scalar, "scalar", iter_time);
+    bench(arr_length, simd_vector, "simd", iter_time);
 }
 
 fn simd_vector(a: &mut Vec<f32>, n_max: u64) {
@@ -80,7 +75,7 @@ fn simd_vector(a: &mut Vec<f32>, n_max: u64) {
     }
 }
 
-fn scaler(a: &mut Vec<f32>, n_max: u64) {
+fn scalar(a: &mut Vec<f32>, n_max: u64) {
     a.iter_mut().enumerate().for_each(|(i, x)| {
         for _ in 0..n_max {
             *x += i as f32;
