@@ -80,9 +80,9 @@ create_simd!(simd_vector_8, 8, f32, f32x8);
 create_simd!(simd_vector_4, 4, f32, f32x4);
 create_simd!(simd_vector_2, 2, f32, f32x2);
 
-create_simd!(simd_vector_f64_16, 8, f64, f64x8);
-create_simd!(simd_vector_f64_8, 4, f64, f64x4);
-create_simd!(simd_vector_f64_4, 2, f64, f64x2);
+create_simd!(simd_vector_f64_8, 8, f64, f64x8);
+create_simd!(simd_vector_f64_4, 4, f64, f64x4);
+create_simd!(simd_vector_f64_2, 2, f64, f64x2);
 
 fn run_simd2(arr_length: u64, iter_time: u64) {
     create_bench!(arr_length, scalar_f32, "scalar", iter_time);
@@ -94,9 +94,9 @@ fn run_simd2(arr_length: u64, iter_time: u64) {
 
     create_bench!(arr_length, scalar_f64, "scalar_64", iter_time);
 
+    create_bench!(arr_length, simd_vector_f64_2, "simd_f64_2", iter_time);
     create_bench!(arr_length, simd_vector_f64_4, "simd_f64_4", iter_time);
     create_bench!(arr_length, simd_vector_f64_8, "simd_f64_8", iter_time);
-    create_bench!(arr_length, simd_vector_f64_16, "simd_f64_16", iter_time);
 }
 
 fn scalar_f32(a: &mut [f32], n_max: u64) {
