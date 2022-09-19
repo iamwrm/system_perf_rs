@@ -5,25 +5,26 @@ use std::time;
 
 fn main() {
     // run_simd1();
-    let t1 = time::Instant::now();
     run_simd2();
-    println!("simd2: {:?}", t1.elapsed());
 }
 
 fn black_box<T>(dummy: T) -> T {
     unsafe { std::ptr::read_volatile(&dummy) }
 }
 
-fn scaler(a: &mut Vec<f32>) {
-    // add x for 100 times
-    for i in 0..10_000_000 {
-        a.iter_mut().for_each(|x| {
-            let i = i as f32;
-            *x += i;
-        });
-    }
+fn scaler(a: &mut Vec<f32>, i: i32) {
+    a.iter_mut().for_each(|x| {
+        let i = i as f32;
+        *x += i;
+    });
+}
 
-    black_box(a[1023]);
+fn simd_vector(a: &mut Vec<f32>, i: i32) {
+    // add x for 100 times
+    a.iter_mut().for_each(|x| {
+        let i = i as f32;
+        *x += i;
+    });
 }
 
 fn get_vec() -> Vec<f32> {
@@ -34,11 +35,24 @@ fn get_vec() -> Vec<f32> {
     a
 }
 
-fn run_simd2() {
+fn bench<F>(f_to_bench: F)
+where
+    F: Fn(&mut Vec<f32>, i32) -> (),
+{
     let mut a = get_vec();
-
-    scaler(&mut a);
+    let t1 = time::Instant::now();
+    for i in 0..10_000_000 {
+        f_to_bench(&mut a, i);
+    }
     println!("a[{}] = {}", 1023, a[1023]);
+    black_box(a[1023]);
+    println!("simd2: {:?}", t1.elapsed());
+}
+
+fn run_simd2() {
+    bench(scaler);
+    bench(scaler);
+    bench(scaler);
 }
 
 #[allow(dead_code)]
