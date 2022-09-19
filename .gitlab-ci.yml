@@ -34,10 +34,13 @@ build_centos7:
   image: centos:7
   stage: build
   timeout: 30 minutes
+  artifacts:
+    paths:
+      - hellosimd/target/release/hellosimd
   script:
     - cat /etc/*release
     - lscpu
-    - yum update -y && yum install -y epel-release && yum update -y && yum install -y curl git make
+    - yum update -y && yum install -y epel-release && yum update -y && yum install -y curl git make gcc
     - curl https://sh.rustup.rs -sSf | sh -s -- -y
     - source "$HOME/.cargo/env"
     - rustup toolchain install nightly
