@@ -43,7 +43,7 @@ macro_rules! create_bench {
 }
 
 macro_rules! create_simd {
-    ($simd_name:ident,$simd_width:expr,$fnn:ty,$f32xn:ty) => {
+    ($simd_name:ident,$simd_width:expr,$fnn:ty,$fnnxn:ty) => {
         fn $simd_name(a: &mut Vec<$fnn>, n_max: u64) {
             const SIMD_WIDTH: usize = $simd_width;
             let n = a.len() / SIMD_WIDTH;
@@ -52,13 +52,13 @@ macro_rules! create_simd {
                 let (start, end) = (simd_slice * SIMD_WIDTH, (simd_slice + 1) * SIMD_WIDTH);
 
                 let a_slice = &mut a[start..end];
-                let mut a_simd_slice = <$f32xn>::from_array(a_slice.try_into().unwrap());
+                let mut a_simd_slice = <$fnnxn>::from_array(a_slice.try_into().unwrap());
 
                 let k = (start..end)
                     .into_iter()
                     .map(|i| i as $fnn)
                     .collect::<Vec<$fnn>>();
-                let k16 = <$f32xn>::from_array(k.try_into().unwrap());
+                let k16 = <$fnnxn>::from_array(k.try_into().unwrap());
 
                 for _ in 0..n_max {
                     a_simd_slice += k16;
