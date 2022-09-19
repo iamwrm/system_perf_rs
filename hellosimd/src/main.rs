@@ -44,92 +44,49 @@ where
     // black_box(a[idx]);
 }
 
+macro_rules! create_simd {
+    ($simd_name:ident,$simd_width:expr,$f32xn:ty) => {
+        fn $simd_name(a: &mut Vec<f32>, n_max: u64) {
+            const SIMD_WIDTH: usize = $simd_width;
+            let n = a.len() / SIMD_WIDTH;
+
+            for simd_slice in 0..n {
+                let (start, end) = (simd_slice * SIMD_WIDTH, (simd_slice + 1) * SIMD_WIDTH);
+
+                let a_slice = &mut a[start..end];
+                let mut a_simd_slice = <$f32xn>::from_array(a_slice.try_into().unwrap());
+
+                let k = (start..end)
+                    .into_iter()
+                    .map(|i| i as f32)
+                    .collect::<Vec<f32>>();
+                let k16 = <$f32xn>::from_array(k.try_into().unwrap());
+
+                for _ in 0..n_max {
+                    a_simd_slice = a_simd_slice + k16;
+                }
+                a_slice.copy_from_slice(&a_simd_slice.to_array());
+            }
+
+            for j in n * SIMD_WIDTH..a.len() {
+                for _ in 0..n_max {
+                    a[j] += j as f32;
+                }
+            }
+        }
+    };
+}
+create_simd!(simd_vector_16, 16, f32x16);
+create_simd!(simd_vector_8, 8, f32x8);
+create_simd!(simd_vector_4, 4, f32x4);
+create_simd!(simd_vector_2, 2, f32x2);
+
 fn run_simd2(arr_length: u64, iter_time: u64) {
     bench(arr_length, scalar, "scalar", iter_time);
+    bench(arr_length, simd_vector_2, "simd_2", iter_time);
     bench(arr_length, simd_vector_4, "simd_4", iter_time);
     bench(arr_length, simd_vector_8, "simd_8", iter_time);
     bench(arr_length, simd_vector_16, "simd_16", iter_time);
-}
-
-fn simd_vector_4(a: &mut Vec<f32>, n_max: u64) {
-    const SIMD_WIDTH: usize = 4;
-    let n = a.len() / SIMD_WIDTH;
-
-    for simd_slice in 0..n {
-        let a_slice = &mut a[simd_slice * SIMD_WIDTH..(simd_slice + 1) * SIMD_WIDTH];
-        let mut a16 = f32x4::from_array(a_slice.try_into().unwrap());
-
-        let k = (simd_slice * SIMD_WIDTH..(simd_slice + 1) * SIMD_WIDTH)
-            .into_iter()
-            .map(|i| i as f32)
-            .collect::<Vec<f32>>();
-        let k16 = f32x4::from_array(k.try_into().unwrap());
-
-        for _ in 0..n_max {
-            a16 = a16 + k16;
-        }
-        a_slice.copy_from_slice(&a16.to_array());
-    }
-
-    for j in n * SIMD_WIDTH..a.len() {
-        for _ in 0..n_max {
-            a[j] += j as f32;
-        }
-    }
-}
-
-fn simd_vector_8(a: &mut Vec<f32>, n_max: u64) {
-    const SIMD_WIDTH: usize = 8;
-    let n = a.len() / SIMD_WIDTH;
-
-    for simd_slice in 0..n {
-        let a_slice = &mut a[simd_slice * SIMD_WIDTH..(simd_slice + 1) * SIMD_WIDTH];
-        let mut a16 = f32x8::from_array(a_slice.try_into().unwrap());
-
-        let k = (simd_slice * SIMD_WIDTH..(simd_slice + 1) * SIMD_WIDTH)
-            .into_iter()
-            .map(|i| i as f32)
-            .collect::<Vec<f32>>();
-        let k16 = f32x8::from_array(k.try_into().unwrap());
-
-        for _ in 0..n_max {
-            a16 = a16 + k16;
-        }
-        a_slice.copy_from_slice(&a16.to_array());
-    }
-
-    for j in n * SIMD_WIDTH..a.len() {
-        for _ in 0..n_max {
-            a[j] += j as f32;
-        }
-    }
-}
-
-fn simd_vector_16(a: &mut Vec<f32>, n_max: u64) {
-    const SIMD_WIDTH: usize = 16;
-    let n = a.len() / SIMD_WIDTH;
-
-    for simd_slice in 0..n {
-        let a_slice = &mut a[simd_slice * SIMD_WIDTH..(simd_slice + 1) * SIMD_WIDTH];
-        let mut a16 = f32x16::from_array(a_slice.try_into().unwrap());
-
-        let k = (simd_slice * SIMD_WIDTH..(simd_slice + 1) * SIMD_WIDTH)
-            .into_iter()
-            .map(|i| i as f32)
-            .collect::<Vec<f32>>();
-        let k16 = f32x16::from_array(k.try_into().unwrap());
-
-        for _ in 0..n_max {
-            a16 = a16 + k16;
-        }
-        a_slice.copy_from_slice(&a16.to_array());
-    }
-
-    for j in n * SIMD_WIDTH..a.len() {
-        for _ in 0..n_max {
-            a[j] += j as f32;
-        }
-    }
 }
 
 fn scalar(a: &mut Vec<f32>, n_max: u64) {
