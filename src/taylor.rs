@@ -28,6 +28,17 @@ series_test!(
     test_series_1_over_1mx
 );
 
+/// 1/(1-x) = 1 + x + x^2 + ... + x^n
+/// x ∈ (-1, 1)
+pub fn series_1_over_1m2x(x: f64, n: i32) -> f64 {
+    (2f64 * x).powi(n)
+}
+series_test!(
+    series_1_over_1m2x,
+    |x| { 1f64 / (1f64 - 2f64 * x) },
+    test_series_1_over_1m2x
+);
+
 /// e^x = 1 + x + x^2/2! + ... + x^n/n!
 /// x ∈ R
 pub fn series_e(x: f64, n: i32) -> f64 {

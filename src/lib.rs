@@ -59,6 +59,7 @@ fn compute_node(n: i32, iter_time: u64) {
     let mut ans_v = vec![];
 
     bench_cl!(taylor::series_1_over_1mx, ans_v, n_v, iter_time, x, "1/(1-x)");
+    bench_cl!(taylor::series_1_over_1m2x, ans_v, n_v, iter_time, x, "1/(1-2x)");
     bench_cl!(taylor::series_e, ans_v, n_v, iter_time, x, "e^x");
     bench_cl!(taylor::series_cos, ans_v, n_v, iter_time, x, "cos(x)");
     bench_cl!(taylor::series_sin, ans_v, n_v, iter_time, x, "sin(x)");
