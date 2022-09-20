@@ -31,10 +31,10 @@ where
         .unwrap()
         .as_nanos()
         / iter_time as u128;
+
     println!(
         "{:10} {} ns",
-        func_name,
-        nano_diff.to_formatted_string(&Locale::en)
+        func_name, nano_diff.to_formatted_string(&Locale::en)
     );
     nano_diff
 }
@@ -58,16 +58,10 @@ fn compute_node(n: i32, iter_time: u64) {
 
     let mut ans_v = vec![];
 
-    bench_cl!(
-        taylor::series_1_over_1mx,
-        ans_v,
-        n_v,
-        iter_time,
-        x,
-        "1/(1-x)"
-    );
+    bench_cl!(taylor::series_1_over_1mx, ans_v, n_v, iter_time, x, "1/(1-x)");
     bench_cl!(taylor::series_e, ans_v, n_v, iter_time, x, "e^x");
     bench_cl!(taylor::series_cos, ans_v, n_v, iter_time, x, "cos(x)");
+    bench_cl!(taylor::series_sin, ans_v, n_v, iter_time, x, "sin(x)");
 
     let mean = geometric_mean(&ans_v);
     println!("Geo Mean: {} ns", mean);
