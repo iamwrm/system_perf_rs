@@ -22,7 +22,11 @@ macro_rules! series_test {
 pub fn series_1_over_1mx(x: f64, n: i32) -> f64 {
     x.powi(n)
 }
-series_test!(series_1_over_1mx, |x| { 1f64 / (1f64 - x) }, test_series_1_over_1mx);
+series_test!(
+    series_1_over_1mx,
+    |x| { 1f64 / (1f64 - x) },
+    test_series_1_over_1mx
+);
 
 /// e^x = 1 + x + x^2/2! + ... + x^n/n!
 /// x ∈ R
@@ -50,11 +54,11 @@ pub fn series_cos(x: f64, n: i32) -> f64 {
         }
         demoniator
     };
-    let mut ans = up / down;
-    if n.is_odd() {
-        ans = -ans;
+    let ans = up / down;
+    match n.is_odd() {
+        true => -ans,
+        false => ans,
     }
-    ans
 }
 series_test!(series_cos, |x| { f64::cos(x) }, test_series_cos);
 
@@ -69,10 +73,10 @@ pub fn series_sin(x: f64, n: i32) -> f64 {
         }
         demoniator
     };
-    let mut ans = up / down;
-    if n.is_odd() {
-        ans = -ans;
+    let ans = up / down;
+    match n.is_odd() {
+        true => -ans,
+        false => ans,
     }
-    ans
 }
 series_test!(series_sin, |x| { f64::sin(x) }, test_series_sin);
