@@ -16,7 +16,7 @@ fn black_box<T>(dummy: T) -> T {
     unsafe { std::ptr::read_volatile(&dummy) }
 }
 
-fn my_bench<F>(funct_to_bench: F, iter_time: u64) -> u128
+fn my_bench<F>(funct_to_bench: F, iter_time: u64, func_name: &str) -> u128
 where
     F: Fn(),
 {
@@ -31,18 +31,23 @@ where
         .unwrap()
         .as_nanos()
         / iter_time as u128;
-    println!("{} ns", nano_diff.to_formatted_string(&Locale::en));
+    println!(
+        "{:10} {} ns",
+        func_name,
+        nano_diff.to_formatted_string(&Locale::en)
+    );
     nano_diff
 }
 
 macro_rules! bench_cl {
-    ($series_func:expr,$ans_v:expr,$n_v:expr,$iter_time:expr,$x:expr) => {{
+    ($series_func:expr,$ans_v:expr,$n_v:expr,$iter_time:expr,$x:expr,$func_name:expr) => {{
         $ans_v.push(my_bench(
             || {
                 let ans: f64 = $n_v.iter().map(|n| $series_func($x, *n)).sum();
                 black_box(ans);
             },
             $iter_time,
+            $func_name,
         ));
     }};
 }
@@ -53,9 +58,16 @@ fn compute_node(n: i32, iter_time: u64) {
 
     let mut ans_v = vec![];
 
-    bench_cl!(taylor::series_1_over_1mx, ans_v, n_v, iter_time, x);
-    bench_cl!(taylor::series_e, ans_v, n_v, iter_time, x);
-    bench_cl!(taylor::series_cos, ans_v, n_v, iter_time, x);
+    bench_cl!(
+        taylor::series_1_over_1mx,
+        ans_v,
+        n_v,
+        iter_time,
+        x,
+        "1/(1-x)"
+    );
+    bench_cl!(taylor::series_e, ans_v, n_v, iter_time, x, "e^x");
+    bench_cl!(taylor::series_cos, ans_v, n_v, iter_time, x, "cos(x)");
 
     let mean = geometric_mean(&ans_v);
     println!("Geo Mean: {} ns", mean);
