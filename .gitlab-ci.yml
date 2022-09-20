@@ -17,7 +17,6 @@ build:
     - cargo build --release --target=x86_64-unknown-linux-musl 
     - cargo test --target=x86_64-unknown-linux-musl 
     - cargo clippy
-    - cargo test
     - cargo bench
     - make run
 
@@ -45,5 +44,5 @@ build_centos7:
     - source "$HOME/.cargo/env"
     - rustup toolchain install nightly
     - cd hellosimd
-    - cargo test
+    - cargo +nightly test 
     - make run
