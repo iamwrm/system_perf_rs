@@ -5,6 +5,8 @@ help:
 
 run:
 	RUSTFLAGS='-C target-cpu=native' cargo run --release -- -n 20
+run_multithread:
+	RUSTFLAGS='-C target-cpu=native' cargo run --release -- -n 20 -c 1-3
 run_nightly:
 	RUSTFLAGS='-C target-cpu=native' cargo +nightly run --release -- -n 20
 

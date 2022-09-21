@@ -10,7 +10,12 @@ fn black_box<T>(dummy: T) -> T {
     unsafe { std::ptr::read_volatile(&dummy) }
 }
 
-fn my_bench<F>(funct_to_bench: F, iter_time: u64, func_name: &str) -> u128
+enum TestMode {
+    SingleThread,
+    MultiThread,
+}
+
+fn bench<F>(funct_to_bench: F, iter_time: u64, func_name: &str, test_mode: &TestMode) -> u128
 where
     F: Fn(),
 {
@@ -26,28 +31,32 @@ where
         .as_nanos()
         / iter_time as u128;
 
-    println!(
-        "{:10} {} ns",
-        func_name,
-        nano_diff.to_formatted_string(&Locale::en)
-    );
+    if let TestMode::SingleThread = test_mode {
+        println!(
+            "{:10} {} ns",
+            func_name,
+            nano_diff.to_formatted_string(&Locale::en)
+        );
+    }
+
     nano_diff
 }
 
 macro_rules! bench_cl {
-    ($series_func:expr,$ans_v:expr,$n_v:expr,$iter_time:expr,$x:expr,$func_name:expr) => {{
-        $ans_v.push(my_bench(
+    ($series_func:expr,$ans_v:expr,$n_v:expr,$iter_time:expr,$x:expr,$func_name:expr,$test_mode:expr) => {{
+        $ans_v.push(bench(
             || {
                 let ans: f64 = $n_v.iter().map(|n| $series_func($x, *n)).sum();
                 black_box(ans);
             },
             $iter_time,
             $func_name,
+            $test_mode,
         ));
     }};
 }
 
-fn compute_node(n: i32, iter_time: u64) {
+fn compute_node(n: i32, iter_time: u64, test_mode: &TestMode) -> u128 {
     let x = 0.38f64;
     let n_v = (0..n).collect::<Vec<i32>>();
 
@@ -59,7 +68,8 @@ fn compute_node(n: i32, iter_time: u64) {
         n_v,
         iter_time,
         x,
-        "1/(1-x)"
+        "1/(1-x)",
+        test_mode
     );
     bench_cl!(
         taylor::series_1_over_1m2x,
@@ -67,14 +77,34 @@ fn compute_node(n: i32, iter_time: u64) {
         n_v,
         iter_time,
         x,
-        "1/(1-2x)"
+        "1/(1-2x)",
+        test_mode
     );
-    bench_cl!(taylor::series_e, ans_v, n_v, iter_time, x, "e^x");
-    bench_cl!(taylor::series_cos, ans_v, n_v, iter_time, x, "cos(x)");
-    bench_cl!(taylor::series_sin, ans_v, n_v, iter_time, x, "sin(x)");
+    bench_cl!(taylor::series_e, ans_v, n_v, iter_time, x, "e^x", test_mode);
+    bench_cl!(
+        taylor::series_cos,
+        ans_v,
+        n_v,
+        iter_time,
+        x,
+        "cos(x)",
+        test_mode
+    );
+    bench_cl!(
+        taylor::series_sin,
+        ans_v,
+        n_v,
+        iter_time,
+        x,
+        "sin(x)",
+        test_mode
+    );
 
     let mean = geometric_mean(&ans_v);
-    println!("Geo Mean: {} ns", mean);
+    if let TestMode::SingleThread = test_mode {
+        println!("Geo Mean: {} ns", mean);
+    }
+    mean
 }
 
 fn geometric_mean(v: &[u128]) -> u128 {
@@ -86,11 +116,34 @@ fn geometric_mean(v: &[u128]) -> u128 {
     ans_f.powf(1f64 / v.len() as f64) as u128
 }
 
-pub fn get_rdtsc_ratio(n: i32, iter_time: u64) {
+pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
     let start_tick = get_rdtsc();
     let start_nanosec = SystemTime::now();
 
-    compute_node(n, iter_time);
+    match core_list {
+        Some(core_list) => {
+            let mut handles = vec![];
+            for core in core_list {
+                let handle = std::thread::Builder::new()
+                    .name(format!("core {}", core))
+                    .spawn(move || {
+                        println!("Thread {} started", core);
+                        compute_node(n, iter_time, &TestMode::MultiThread)
+                    })
+                    .unwrap();
+                handles.push(handle);
+            }
+            let mut result = vec![];
+            for handle in handles {
+                let a = handle.join().unwrap();
+                result.push(a)
+            }
+            println!("Each thread's geometric mean: {:?}", result);
+        }
+        None => {
+            compute_node(n, iter_time, &TestMode::SingleThread {});
+        }
+    }
 
     let end_tick = get_rdtsc();
     let tick_diff = end_tick - start_tick;

@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use system_perf::get_rdtsc_ratio;
+use system_perf::launch_threads;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -13,6 +13,34 @@ struct Args {
     /// bench iterations
     #[clap(short, long, value_parser, default_value_t = 10_000_000u64)]
     iter_time: u64,
+    #[clap(short, long)]
+    cores: Option<String>,
+}
+
+fn get_core_list(cores: &str) -> Vec<usize> {
+    let mut ans = vec![];
+    for i in cores.split(',') {
+        if i.contains('-') {
+            let mut iter = i.split('-');
+            let start = iter.next().unwrap().parse::<usize>().unwrap();
+            let end = iter.next().unwrap().parse::<usize>().unwrap();
+            for j in start..=end {
+                ans.push(j);
+            }
+        } else {
+            ans.push(i.parse::<usize>().unwrap());
+        }
+    }
+    ans
+}
+
+#[test]
+fn test_get_core_list() {
+    assert_eq!(get_core_list("1"), vec![1]);
+    assert_eq!(get_core_list("1,2,3"), vec![1, 2, 3]);
+    assert_eq!(get_core_list("1-3"), vec![1, 2, 3]);
+    assert_eq!(get_core_list("1-3,5"), vec![1, 2, 3, 5]);
+    assert_eq!(get_core_list("1-3,7-10,11"), vec![1, 2, 3, 7, 8, 9, 10, 11]);
 }
 
 fn main() {
@@ -22,5 +50,10 @@ fn main() {
 
     println!("vesrion: {}", clap::crate_version!());
 
-    get_rdtsc_ratio(args.n, args.iter_time);
+    let core_list = match args.cores {
+        Some(cores) => Some(get_core_list(&cores)),
+        None => None,
+    };
+
+    launch_threads(args.n, args.iter_time, core_list);
 }
