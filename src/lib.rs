@@ -152,6 +152,7 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
                 result.insert(core, a);
             }
             println!("Each thread's geometric mean: {:?}", result);
+            println!("Sum: {}", result.values().sum::<u128>());
             println!("Max: {}", result.values().max().unwrap());
             println!("Min: {}", result.values().min().unwrap());
             println!("Median: {}", median(&result.values().cloned().collect()));
