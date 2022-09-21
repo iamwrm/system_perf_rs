@@ -1,7 +1,9 @@
 pub mod taylor;
 pub mod timer;
-use std::time::SystemTime;
 
+use std::{collections::BTreeMap, time::SystemTime};
+
+use core_affinity::{set_for_current, CoreId};
 use num_format::{Locale, ToFormattedString};
 
 use timer::get_rdtsc;
@@ -116,7 +118,15 @@ fn geometric_mean(v: &[u128]) -> u128 {
     ans_f.powf(1f64 / v.len() as f64) as u128
 }
 
-use core_affinity::{set_for_current, CoreId};
+fn median(numbers: &Vec<u128>) -> u128 {
+    let mut new_nums = vec![0; numbers.len()];
+    new_nums.clone_from_slice(&numbers);
+
+    new_nums.sort();
+
+    let mid = numbers.len() / 2;
+    numbers[mid]
+}
 
 pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
     let start_tick = get_rdtsc();
@@ -125,23 +135,26 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
     match core_list {
         Some(core_list) => {
             let mut handles = vec![];
-            for core in core_list {
+            for &core in core_list.iter() {
                 let handle = std::thread::Builder::new()
                     .name(format!("core {}", core))
                     .spawn(move || {
-                        println!("Thread {} started", core);
+                        println!("core {} job started", core);
                         set_for_current(CoreId { id: core });
                         compute_node(n, iter_time, &TestMode::MultiThread)
                     })
                     .unwrap();
                 handles.push(handle);
             }
-            let mut result = vec![];
-            for handle in handles {
+            let mut result = BTreeMap::new();
+            for (handle, core) in handles.into_iter().zip(core_list.into_iter()) {
                 let a = handle.join().unwrap();
-                result.push(a)
+                result.insert(core, a);
             }
             println!("Each thread's geometric mean: {:?}", result);
+            println!("Max: {}", result.values().max().unwrap());
+            println!("Min: {}", result.values().min().unwrap());
+            println!("Median: {}", median(&result.values().cloned().collect()));
         }
         None => {
             compute_node(n, iter_time, &TestMode::SingleThread {});

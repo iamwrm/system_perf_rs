@@ -50,10 +50,7 @@ fn main() {
 
     println!("vesrion: {}", clap::crate_version!());
 
-    let core_list = match args.cores {
-        Some(cores) => Some(get_core_list(&cores)),
-        None => None,
-    };
+    let core_list = args.cores.map(|cores| get_core_list(&cores));
 
     launch_threads(args.n, args.iter_time, core_list);
 }
