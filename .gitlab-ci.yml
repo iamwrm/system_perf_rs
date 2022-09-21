@@ -36,6 +36,7 @@ build_centos7:
   artifacts:
     paths:
       - hellosimd/target/release/hellosimd
+      - target/release/system_perf
   script:
     - cat /etc/*release
     - lscpu
@@ -43,6 +44,7 @@ build_centos7:
     - curl https://sh.rustup.rs -sSf | sh -s -- -y
     - source "$HOME/.cargo/env"
     - rustup toolchain install nightly
+    - make run
     - cd hellosimd
     - cargo +nightly test 
     - make run
