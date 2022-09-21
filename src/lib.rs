@@ -116,6 +116,8 @@ fn geometric_mean(v: &[u128]) -> u128 {
     ans_f.powf(1f64 / v.len() as f64) as u128
 }
 
+use core_affinity::{set_for_current, CoreId};
+
 pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
     let start_tick = get_rdtsc();
     let start_nanosec = SystemTime::now();
@@ -128,6 +130,7 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
                     .name(format!("core {}", core))
                     .spawn(move || {
                         println!("Thread {} started", core);
+                        set_for_current(CoreId { id: core });
                         compute_node(n, iter_time, &TestMode::MultiThread)
                     })
                     .unwrap();
