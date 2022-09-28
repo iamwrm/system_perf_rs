@@ -33,7 +33,6 @@ fn get_core_list(cores: &str) -> Vec<usize> {
     }
     ans
 }
-
 #[test]
 fn test_get_core_list() {
     assert_eq!(get_core_list("1"), vec![1]);
@@ -41,6 +40,7 @@ fn test_get_core_list() {
     assert_eq!(get_core_list("1-3"), vec![1, 2, 3]);
     assert_eq!(get_core_list("1-3,5"), vec![1, 2, 3, 5]);
     assert_eq!(get_core_list("1-3,7-10,11"), vec![1, 2, 3, 7, 8, 9, 10, 11]);
+    assert_eq!(get_core_list("1-3,2-4"), vec![1, 2, 3, 2, 3, 4]);
 }
 
 fn main() {
@@ -48,7 +48,7 @@ fn main() {
 
     dbg!(&args);
 
-    println!("vesrion: {}", clap::crate_version!());
+    println!("version: {}", clap::crate_version!());
 
     let core_list = args.cores.map(|cores| get_core_list(&cores));
 
