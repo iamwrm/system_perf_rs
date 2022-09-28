@@ -44,28 +44,22 @@ where
     nano_diff
 }
 
-macro_rules! bench_cl {
-    (
-        $bencher:expr,
-        $series_func:expr,
-        $func_name:expr,
-    ) => {{
-        let x = $bencher.x;
-        let iter_time = $bencher.iter_time;
-        let test_mode = &$bencher.test_mode;
-        let n_v = &$bencher.n;
-        let ans = &mut $bencher.ans;
+fn bench_cl(bencher: &mut Bencher, series_func: fn(f64, i32) -> f64, func_name: &str) {
+    let x = bencher.x;
+    let iter_time = bencher.iter_time;
+    let test_mode = &bencher.test_mode;
+    let ans = &mut bencher.ans;
+    let n = &mut bencher.n;
 
-        ans.push(bench(
-            || {
-                let ans: f64 = n_v.iter().map(|n| $series_func(x, *n)).sum();
-                black_box(ans);
-            },
-            iter_time,
-            $func_name,
-            test_mode,
-        ));
-    }};
+    ans.push(bench(
+        || {
+            let ans: f64 = n.iter().map(|n| series_func(x, *n)).sum();
+            black_box(ans);
+        },
+        iter_time,
+        func_name,
+        test_mode,
+    ));
 }
 
 struct Bencher {
@@ -85,11 +79,11 @@ fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
         test_mode,
     };
 
-    bench_cl! { bencher, taylor::series_1_over_1mx, "1/(1-x)", };
-    bench_cl! { bencher, taylor::series_1_over_1m2x, "1/(1-2x)", };
-    bench_cl! { bencher, taylor::series_e, "e^x", };
-    bench_cl! { bencher, taylor::series_cos,  "cos(x)", };
-    bench_cl! { bencher, taylor::series_sin,  "sin(x)", };
+    bench_cl(&mut bencher, taylor::series_1_over_1mx, "1/(1-x)");
+    bench_cl(&mut bencher, taylor::series_1_over_1m2x, "1/(1-2x)");
+    bench_cl(&mut bencher, taylor::series_e, "e^x");
+    bench_cl(&mut bencher, taylor::series_cos, "cos(x)");
+    bench_cl(&mut bencher, taylor::series_sin, "sin(x)");
 
     let mean = geometric_mean(&bencher.ans);
     if let TestMode::SingleThread = bencher.test_mode {
