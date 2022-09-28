@@ -17,7 +17,7 @@ enum TestMode {
     MultiThread,
 }
 
-fn bench<F>(funct_to_bench: F, iter_time: u64, func_name: &str, test_mode: &TestMode) -> u128
+fn bench_impl<F>(funct_to_bench: F, iter_time: u64, func_name: &str, test_mode: &TestMode) -> u128
 where
     F: Fn(),
 {
@@ -45,49 +45,45 @@ where
 }
 
 struct Bencher {
-    pub ans: Vec<u128>,
+    pub latency_mean: Vec<u128>,
     pub n: Vec<i32>,
     pub x: f64,
     pub iter_time: u64,
     pub test_mode: TestMode,
 }
 
-impl Bencher {
-    pub fn bench_v(&mut self, series_func: fn(f64, i32) -> f64, func_name: &str) {
-        let x = self.x;
-        let iter_time = self.iter_time;
-        let test_mode = &self.test_mode;
-        let ans = &mut self.ans;
-        let n = &mut self.n;
+type SeriesFunc = fn(f64, i32) -> f64;
 
-        ans.push(bench(
-            || {
-                let ans: f64 = n.iter().map(|n| series_func(x, *n)).sum();
-                black_box(ans);
-            },
-            iter_time,
-            func_name,
-            test_mode,
-        ));
+impl Bencher {
+    pub fn bench(&mut self, series_func: SeriesFunc, func_name: &str) {
+        self.latency_mean
+            .push(self.get_latency_mean(series_func, func_name));
+    }
+    fn get_latency_mean(&self, series_func: SeriesFunc, func_name: &str) -> u128 {
+        let funct_to_bench = || {
+            let ans: f64 = self.n.iter().map(|n| series_func(self.x, *n)).sum();
+            black_box(ans);
+        };
+        bench_impl(funct_to_bench, self.iter_time, func_name, &self.test_mode)
     }
 }
 
 fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
     let mut bencher = Bencher {
-        ans: vec![],
+        latency_mean: vec![],
         n: (0..n).collect::<Vec<i32>>(),
         x: 0.38f64,
         iter_time,
         test_mode,
     };
 
-    bencher.bench_v(taylor::series_1_over_1mx, "1/(1-x)");
-    bencher.bench_v(taylor::series_1_over_1m2x, "1/(1-2x)");
-    bencher.bench_v(taylor::series_e, "e^x");
-    bencher.bench_v(taylor::series_cos, "cos(x)");
-    bencher.bench_v(taylor::series_sin, "sin(x)");
+    bencher.bench(taylor::series_1_over_1mx, "1/(1-x)");
+    bencher.bench(taylor::series_1_over_1m2x, "1/(1-2x)");
+    bencher.bench(taylor::series_e, "e^x");
+    bencher.bench(taylor::series_cos, "cos(x)");
+    bencher.bench(taylor::series_sin, "sin(x)");
 
-    let mean = geometric_mean(&bencher.ans);
+    let mean = geometric_mean(&bencher.latency_mean);
     if let TestMode::SingleThread = bencher.test_mode {
         println!("Geo Mean: {} ns", mean);
     }
@@ -95,22 +91,25 @@ fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
 }
 
 fn geometric_mean(v: &[u128]) -> u128 {
-    let mut ans = 1u128;
-    for i in v {
-        ans *= i;
-    }
-    let ans_f = ans as f64;
-    ans_f.powf(1f64 / v.len() as f64) as u128
+    let ans = {
+        let mut ans = 1u128;
+        for i in v {
+            ans *= i;
+        }
+        ans
+    };
+    (ans as f64).powf(1f64 / v.len() as f64) as u128
 }
 
 fn median(numbers: &Vec<u128>) -> u128 {
-    let mut new_nums = vec![0; numbers.len()];
-    new_nums.clone_from_slice(&numbers);
+    let new_nums = {
+        let mut nums = vec![0; numbers.len()];
+        nums.clone_from_slice(&numbers);
+        nums.sort();
+        nums
+    };
 
-    new_nums.sort();
-
-    let mid = numbers.len() / 2;
-    numbers[mid]
+    new_nums[numbers.len() / 2]
 }
 
 pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
@@ -151,7 +150,7 @@ fn multithread(core_list: Vec<usize>, n: i32, iter_time: u64) {
             .spawn(move || {
                 println!("core {} job started", core);
                 set_for_current(CoreId { id: core });
-                compute_node(n, iter_time, TestMode::MultiThread)
+                compute_node(n, iter_time, TestMode::MultiThread {})
             })
             .unwrap();
         handles.push(handle);
