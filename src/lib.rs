@@ -44,30 +44,32 @@ where
     nano_diff
 }
 
-fn bench_cl(bencher: &mut Bencher, series_func: fn(f64, i32) -> f64, func_name: &str) {
-    let x = bencher.x;
-    let iter_time = bencher.iter_time;
-    let test_mode = &bencher.test_mode;
-    let ans = &mut bencher.ans;
-    let n = &mut bencher.n;
-
-    ans.push(bench(
-        || {
-            let ans: f64 = n.iter().map(|n| series_func(x, *n)).sum();
-            black_box(ans);
-        },
-        iter_time,
-        func_name,
-        test_mode,
-    ));
-}
-
 struct Bencher {
     pub ans: Vec<u128>,
     pub n: Vec<i32>,
     pub x: f64,
     pub iter_time: u64,
     pub test_mode: TestMode,
+}
+
+impl Bencher {
+    pub fn bench_v(&mut self, series_func: fn(f64, i32) -> f64, func_name: &str) {
+        let x = self.x;
+        let iter_time = self.iter_time;
+        let test_mode = &self.test_mode;
+        let ans = &mut self.ans;
+        let n = &mut self.n;
+
+        ans.push(bench(
+            || {
+                let ans: f64 = n.iter().map(|n| series_func(x, *n)).sum();
+                black_box(ans);
+            },
+            iter_time,
+            func_name,
+            test_mode,
+        ));
+    }
 }
 
 fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
@@ -79,11 +81,11 @@ fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
         test_mode,
     };
 
-    bench_cl(&mut bencher, taylor::series_1_over_1mx, "1/(1-x)");
-    bench_cl(&mut bencher, taylor::series_1_over_1m2x, "1/(1-2x)");
-    bench_cl(&mut bencher, taylor::series_e, "e^x");
-    bench_cl(&mut bencher, taylor::series_cos, "cos(x)");
-    bench_cl(&mut bencher, taylor::series_sin, "sin(x)");
+    bencher.bench_v(taylor::series_1_over_1mx, "1/(1-x)");
+    bencher.bench_v(taylor::series_1_over_1m2x, "1/(1-2x)");
+    bencher.bench_v(taylor::series_e, "e^x");
+    bencher.bench_v(taylor::series_cos, "cos(x)");
+    bencher.bench_v(taylor::series_sin, "sin(x)");
 
     let mean = geometric_mean(&bencher.ans);
     if let TestMode::SingleThread = bencher.test_mode {
