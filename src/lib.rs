@@ -45,40 +45,54 @@ where
 }
 
 macro_rules! bench_cl {
-    (   $series_func:expr,
-        $ans_v:expr,
-        $n_v:expr,
-        $x:expr,
-        $iter_time:expr,
+    (
+        $bencher:expr,
+        $series_func:expr,
         $func_name:expr,
-        $test_mode:expr
     ) => {{
-        $ans_v.push(bench(
+        let x = $bencher.x;
+        let iter_time = $bencher.iter_time;
+        let test_mode = &$bencher.test_mode;
+        let n_v = &$bencher.n;
+        let ans = &mut $bencher.ans;
+
+        ans.push(bench(
             || {
-                let ans: f64 = $n_v.iter().map(|n| $series_func($x, *n)).sum();
+                let ans: f64 = n_v.iter().map(|n| $series_func(x, *n)).sum();
                 black_box(ans);
             },
-            $iter_time,
+            iter_time,
             $func_name,
-            $test_mode,
+            test_mode,
         ));
     }};
 }
 
-fn compute_node(n: i32, iter_time: u64, test_mode: &TestMode) -> u128 {
-    let x = 0.38f64;
-    let n_v = (0..n).collect::<Vec<i32>>();
+struct Bencher {
+    pub ans: Vec<u128>,
+    pub n: Vec<i32>,
+    pub x: f64,
+    pub iter_time: u64,
+    pub test_mode: TestMode,
+}
 
-    let mut ans_v = vec![];
+fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
+    let mut bencher = Bencher {
+        ans: vec![],
+        n: (0..n).collect::<Vec<i32>>(),
+        x: 0.38f64,
+        iter_time,
+        test_mode,
+    };
 
-    bench_cl! { taylor::series_1_over_1mx, ans_v, n_v, x, iter_time, "1/(1-x)", test_mode };
-    bench_cl! { taylor::series_1_over_1m2x, ans_v, n_v, x, iter_time, "1/(1-2x)", test_mode };
-    bench_cl! { taylor::series_e, ans_v, n_v, x, iter_time, "e^x", test_mode};
-    bench_cl! { taylor::series_cos, ans_v, n_v, x, iter_time, "cos(x)", test_mode };
-    bench_cl! { taylor::series_sin, ans_v, n_v, x, iter_time, "sin(x)", test_mode };
+    bench_cl! { bencher, taylor::series_1_over_1mx, "1/(1-x)", };
+    bench_cl! { bencher, taylor::series_1_over_1m2x, "1/(1-2x)", };
+    bench_cl! { bencher, taylor::series_e, "e^x", };
+    bench_cl! { bencher, taylor::series_cos,  "cos(x)", };
+    bench_cl! { bencher, taylor::series_sin,  "sin(x)", };
 
-    let mean = geometric_mean(&ans_v);
-    if let TestMode::SingleThread = test_mode {
+    let mean = geometric_mean(&bencher.ans);
+    if let TestMode::SingleThread = bencher.test_mode {
         println!("Geo Mean: {} ns", mean);
     }
     mean
@@ -130,7 +144,7 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
 }
 
 fn singlethread(n: i32, iter_time: u64) {
-    compute_node(n, iter_time, &TestMode::SingleThread {});
+    compute_node(n, iter_time, TestMode::SingleThread {});
 }
 
 fn multithread(core_list: Vec<usize>, n: i32, iter_time: u64) {
@@ -141,7 +155,7 @@ fn multithread(core_list: Vec<usize>, n: i32, iter_time: u64) {
             .spawn(move || {
                 println!("core {} job started", core);
                 set_for_current(CoreId { id: core });
-                compute_node(n, iter_time, &TestMode::MultiThread)
+                compute_node(n, iter_time, TestMode::MultiThread)
             })
             .unwrap();
         handles.push(handle);
