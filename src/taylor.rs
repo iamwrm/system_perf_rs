@@ -19,6 +19,7 @@ macro_rules! series_test {
 
 /// 1/(1-x) = 1 + x + x^2 + ... + x^n
 /// x ∈ (-1, 1)
+#[inline(always)]
 pub fn series_1_over_1mx(x: f64, n: i32) -> f64 {
     x.powi(n)
 }
@@ -30,6 +31,7 @@ series_test!(
 
 /// 1/(1-x) = 1 + x + x^2 + ... + x^n
 /// x ∈ (-1, 1)
+#[inline(always)]
 pub fn series_1_over_1m2x(x: f64, n: i32) -> f64 {
     (2f64 * x).powi(n)
 }
@@ -41,6 +43,7 @@ series_test!(
 
 /// e^x = 1 + x + x^2/2! + ... + x^n/n!
 /// x ∈ R
+#[inline(always)]
 pub fn series_e(x: f64, n: i32) -> f64 {
     let up = 1f64 * x.powi(n);
     let down = {
@@ -56,6 +59,7 @@ series_test!(series_e, |x| { f64::exp(x) }, test_series_e);
 
 /// cos(x) = 1 - x^2/2! + x^4/4! - ... + (-1)^n * x^(2n)/(2n)!
 /// x ∈ R
+#[inline(always)]
 pub fn series_cos(x: f64, n: i32) -> f64 {
     let up = 1f64 * x.powi(2 * n);
     let down = {
@@ -75,6 +79,7 @@ series_test!(series_cos, |x| { f64::cos(x) }, test_series_cos);
 
 /// sin(x) = x - x^3/3! + x^5/5! - ... + (-1)^n * x^(2n+1)/(2n+1)!
 /// x ∈ R
+#[inline(always)]
 pub fn series_sin(x: f64, n: i32) -> f64 {
     let up = 1f64 * x.powi(2 * n + 1);
     let down = {

@@ -55,10 +55,12 @@ struct Bencher {
 type SeriesFunc = fn(f64, i32) -> f64;
 
 impl Bencher {
+    #[inline(always)]
     pub fn bench(&mut self, series_func: SeriesFunc, func_name: &str) {
         self.latency_mean
             .push(self.get_latency_mean(series_func, func_name));
     }
+    #[inline(always)]
     fn get_latency_mean(&self, series_func: SeriesFunc, func_name: &str) -> u128 {
         let funct_to_bench = || {
             let ans: f64 = self.n.iter().map(|n| series_func(self.x, *n)).sum();
