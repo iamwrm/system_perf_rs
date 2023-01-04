@@ -2,20 +2,19 @@ stages:
   - build
 
 build:       
-  image: rust:1.63.0-slim
+  image: rust:1.66.0-slim
   stage: build
   timeout: 30 minutes
   artifacts:
     paths:
-      - target/x86_64-unknown-linux-musl/release/system_perf
+      - target/release/system_perf
   script:
     - uname -a 
     - lscpu
     - apt update && apt install -y git make
-    - rustup target add x86_64-unknown-linux-musl
     - rustup component add clippy
-    - cargo build --release --target=x86_64-unknown-linux-musl 
-    - cargo test --target=x86_64-unknown-linux-musl 
+    - cargo build --release 
+    - cargo test 
     - cargo clippy
     - cargo bench
     - make run
