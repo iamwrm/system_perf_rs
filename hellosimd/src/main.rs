@@ -3,7 +3,7 @@ use std::{convert::TryInto, time};
 
 use clap::Parser;
 
-use core_simd::*;
+use core_simd::simd::*;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
