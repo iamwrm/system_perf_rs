@@ -24,7 +24,7 @@ do{
    i--;
 } while (i);
 clock_gettime(CLOCK_REALTIME,&end);
-printf("%f", (10000000000)  / (end.tv_sec - begin.tv_sec + (end.tv_nsec - begin.tv_nsec)/1.0e9) / 1000000000);
+printf("%f\n", (10000000000)  / (end.tv_sec - begin.tv_sec + (end.tv_nsec - begin.tv_nsec)/1.0e9) / 1000000000);
 return a == b;
 
 
