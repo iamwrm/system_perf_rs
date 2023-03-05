@@ -3,3 +3,4 @@ target
 Cargo.lock
 *.tar.gz
 elfx86exts
+a.out
