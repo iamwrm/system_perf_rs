@@ -11,6 +11,12 @@ RUN \
     && cd /app \
     && cargo b --release
 
+RUN \
+    cd /app/freq_test \
+    && gcc -o freq_test freq.c
+
+
 FROM centos:7
 COPY --from=builder /app/target/release/system_perf /usr/local/bin/system_perf
+COPY --from=builder /app/freq_test/freq_test /usr/local/bin/freq_test
 
