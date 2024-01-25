@@ -36,6 +36,6 @@ Score and ratio is for higher is better. USD/Hour is for lower is better.
 | T4g.large      | 2       | 8GiB    | 0.0864       | 7.80            | 3.91             | 90.25                | 45.21                 |
 | T4g.medium     | 2       | 4GiB    | 0.0432       | 7.53            | 3.92             | 174.37               | 90.78                 |
 |                |         |         |              |                 |                  |                      |                       |
-| MacBook.m1pro  | 1       |         |              |                 | 7.57575758       |                      |                       |
-| 7950x3d        | 1       |         |              |                 | 7.24637681       |                      |                       |
+| MacBook.m1pro  | 1       |         |              |                 | 7.58             |                      |                       |
+| 7950x3d        | 1       |         |              |                 | 7.25             |                      |                       |
 
