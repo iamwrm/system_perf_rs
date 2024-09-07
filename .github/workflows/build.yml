@@ -1,0 +1,29 @@
+on: [push]
+
+name: build
+
+jobs:
+  build:
+    name: Rust build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: check system
+        run: |
+          lscpu && free -h
+
+      - name: install stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Run cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+
+      - name: run
+        run: | 
+          make run
