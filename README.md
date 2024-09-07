@@ -41,3 +41,5 @@ Score and ratio is for higher is better. USD/Hour is for lower is better.
 | MacBook.m3pro  | 1       |         |              |                 | 9.52             |                      |                       |
 | 7950x3d        | 1       |         |              |                 | 7.25             |                      |                       |
 
+
+add ci
