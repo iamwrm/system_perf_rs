@@ -16,7 +16,7 @@ USD/Hour is based on ap-northeast-1
 
 SingleThread is based on `1000/ median_of_numbers_got_from_test `
 
-MultiThread is based on `num_of_cpu * 1000 / sum_of_numbers * num_of_cpu`
+MultiThread is based on `num_of_cpu * 1000 / sum_of_numbers * num_of_cpu` (Yes, num_of_cpu shows up twice)
 
 Score and ratio is for higher is better. USD/Hour is for lower is better.
 
@@ -30,6 +30,7 @@ Score and ratio is for higher is better. USD/Hour is for lower is better.
 | M6i.large      | 2       | 8GiB    | 0.124        | 4.62            | 4.18             | 37.25                | 33.74                 |
 | m7g.medium     | 1       | 4GiB    | 0.0527       | 6.21            | 6.21             | 117.86               | 117.86                |
 | m7g.large      | 2       | 8GiB    | 0.1054       | 12.82           | 6.21             | 121.64               | 58.93                 |
+| r8g.xlarge     | 4       | 32GiB   | 0.2356       | 34.19           | 7.41             | 145.12               | 31.45                 |
 |                |         |         |              |                 |                  |                      |                       |
 | t3.large       | 2       | 8GiB    | 0.1088       | 3.75            | 3.21             | 34.46                | 29.46                 |
 | t3.medium      | 2       | 4GiB    | 0.0544       | 3.22            | 2.68             | 59.15                | 49.28                 |
@@ -37,5 +38,6 @@ Score and ratio is for higher is better. USD/Hour is for lower is better.
 | T4g.medium     | 2       | 4GiB    | 0.0432       | 7.53            | 3.92             | 174.37               | 90.78                 |
 |                |         |         |              |                 |                  |                      |                       |
 | MacBook.m1pro  | 1       |         |              |                 | 7.58             |                      |                       |
+| MacBook.m3pro  | 1       |         |              |                 | 9.52             |                      |                       |
 | 7950x3d        | 1       |         |              |                 | 7.25             |                      |                       |
 
