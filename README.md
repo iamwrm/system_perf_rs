@@ -9,6 +9,26 @@ make run
 - measure rdtsc jitter
 - use subcommand
 
+## Raw results
+
+### M3 Pro
+```
+[src/bin/system_perf.rs:49:5] &args = Args {
+    n: 20,
+    iter_time: 10000000,
+    cores: None,
+}
+version: 0.2.1
+1/(1-x)    51 ns
+1/(1-2x)   48 ns
+e^x        144 ns
+cos(x)     228 ns
+sin(x)     232 ns
+Geo Mean: 113 ns
+Nano Diff 7,058,263,000
+Tick Diff 0
+Base freq: 0.00 Ghz
+```
 
 ## results:
 
