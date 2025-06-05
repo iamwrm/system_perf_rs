@@ -4,3 +4,4 @@ Cargo.lock
 *.tar.gz
 elfx86exts
 a.out
+freq_test/freq

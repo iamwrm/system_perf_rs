@@ -8,24 +8,18 @@ use num_format::{Locale, ToFormattedString};
 
 use timer::get_rdtsc;
 
-fn black_box<T>(dummy: T) -> T {
-    unsafe { std::ptr::read_volatile(&dummy) }
-}
+use std::hint::black_box;
 
-enum TestMode {
-    SingleThread,
-    MultiThread,
-}
 
-fn bench_impl<F>(funct_to_bench: F, iter_time: u64, func_name: &str, test_mode: &TestMode) -> u128
+fn bench_impl<F>(funct_to_bench: F, iter_time: u64, func_name: &str, print_result: bool) -> u128
 where
     F: Fn(),
 {
     let start_nanosec = SystemTime::now();
 
-    (1..iter_time).for_each(|_| {
+    for _ in 0..iter_time {
         funct_to_bench();
-    });
+    }
 
     let nano_diff = SystemTime::now()
         .duration_since(start_nanosec)
@@ -33,7 +27,7 @@ where
         .as_nanos()
         / iter_time as u128;
 
-    if let TestMode::SingleThread = test_mode {
+    if print_result {
         println!(
             "{:10} {} ns",
             func_name,
@@ -49,7 +43,7 @@ struct Bencher {
     pub n: Vec<i32>,
     pub x: f64,
     pub iter_time: u64,
-    pub test_mode: TestMode,
+    pub print_results: bool,
 }
 
 type SeriesFunc = fn(f64, i32) -> f64;
@@ -66,17 +60,17 @@ impl Bencher {
             let ans: f64 = self.n.iter().map(|n| series_func(self.x, *n)).sum();
             black_box(ans);
         };
-        bench_impl(funct_to_bench, self.iter_time, func_name, &self.test_mode)
+        bench_impl(funct_to_bench, self.iter_time, func_name, self.print_results)
     }
 }
 
-fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
+fn compute_node(n: i32, iter_time: u64, print_results: bool) -> u128 {
     let mut bencher = Bencher {
         latency_mean: vec![],
         n: (0..n).collect::<Vec<i32>>(),
         x: 0.38f64,
         iter_time,
-        test_mode,
+        print_results,
     };
 
     bencher.bench(taylor::series_1_over_1mx, "1/(1-x)");
@@ -86,32 +80,21 @@ fn compute_node(n: i32, iter_time: u64, test_mode: TestMode) -> u128 {
     bencher.bench(taylor::series_sin, "sin(x)");
 
     let mean = geometric_mean(&bencher.latency_mean);
-    if let TestMode::SingleThread = bencher.test_mode {
+    if bencher.print_results {
         println!("Geo Mean: {} ns", mean);
     }
     mean
 }
 
 fn geometric_mean(v: &[u128]) -> u128 {
-    let ans = {
-        let mut ans = 1u128;
-        for i in v {
-            ans *= i;
-        }
-        ans
-    };
-    (ans as f64).powf(1f64 / v.len() as f64) as u128
+    let product: u128 = v.iter().product();
+    (product as f64).powf(1.0 / v.len() as f64) as u128
 }
 
 fn median(numbers: &[u128]) -> u128 {
-    let new_nums = {
-        let mut nums = vec![0; numbers.len()];
-        nums.clone_from_slice(numbers);
-        nums.sort();
-        nums
-    };
-
-    new_nums[numbers.len() / 2]
+    let mut nums = numbers.to_vec();
+    nums.sort_unstable();
+    nums[numbers.len() / 2]
 }
 
 pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
@@ -122,7 +105,7 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
             multithread(core_list, n, iter_time);
         }
         None => {
-            singlethread(n, iter_time);
+            compute_node(n, iter_time, true);
         }
     }
 
@@ -159,10 +142,6 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
     println!("Base freq: {:.2} Ghz", freq);
 }
 
-fn singlethread(n: i32, iter_time: u64) {
-    compute_node(n, iter_time, TestMode::SingleThread {});
-}
-
 fn multithread(core_list: Vec<usize>, n: i32, iter_time: u64) {
     let mut handles = vec![];
     for &core in core_list.iter() {
@@ -171,19 +150,20 @@ fn multithread(core_list: Vec<usize>, n: i32, iter_time: u64) {
             .spawn(move || {
                 println!("core {} job started", core);
                 set_for_current(CoreId { id: core });
-                compute_node(n, iter_time, TestMode::MultiThread {})
+                compute_node(n, iter_time, false)
             })
             .unwrap();
         handles.push(handle);
     }
-    let mut result = BTreeMap::new();
-    for (handle, core) in handles.into_iter().zip(core_list.into_iter()) {
-        let a = handle.join().unwrap();
-        result.insert(core, a);
-    }
-    println!("Each thread's geometric mean: {:?}", result);
-    println!("Sum: {}", result.values().sum::<u128>());
-    println!("Max: {}", result.values().max().unwrap());
-    println!("Min: {}", result.values().min().unwrap());
-    println!("Median: {}", median(&result.values().cloned().collect::<Vec<u128>>()));
+    let results: BTreeMap<_, _> = handles
+        .into_iter()
+        .zip(core_list)
+        .map(|(handle, core)| (core, handle.join().unwrap()))
+        .collect();
+    let values: Vec<u128> = results.values().cloned().collect();
+    println!("Each thread's geometric mean: {:?}", results);
+    println!("Sum: {}", values.iter().sum::<u128>());
+    println!("Max: {}", values.iter().max().unwrap());
+    println!("Min: {}", values.iter().min().unwrap());
+    println!("Median: {}", median(&values));
 }
