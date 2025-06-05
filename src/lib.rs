@@ -103,10 +103,10 @@ fn geometric_mean(v: &[u128]) -> u128 {
     (ans as f64).powf(1f64 / v.len() as f64) as u128
 }
 
-fn median(numbers: &Vec<u128>) -> u128 {
+fn median(numbers: &[u128]) -> u128 {
     let new_nums = {
         let mut nums = vec![0; numbers.len()];
-        nums.clone_from_slice(&numbers);
+        nums.clone_from_slice(numbers);
         nums.sort();
         nums
     };
@@ -185,5 +185,5 @@ fn multithread(core_list: Vec<usize>, n: i32, iter_time: u64) {
     println!("Sum: {}", result.values().sum::<u128>());
     println!("Max: {}", result.values().max().unwrap());
     println!("Min: {}", result.values().min().unwrap());
-    println!("Median: {}", median(&result.values().cloned().collect()));
+    println!("Median: {}", median(&result.values().cloned().collect::<Vec<u128>>()));
 }
