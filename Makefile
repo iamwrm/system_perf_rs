@@ -3,6 +3,20 @@
 help:
 	echo "help"
 
+setup:
+	@echo "Checking for Rust toolchain..."
+	@which rustc > /dev/null 2>&1 || { \
+		echo "Rust not found, installing..."; \
+		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; \
+		. ~/.cargo/env; \
+	}
+	@echo "Checking for build-essential..."
+	@dpkg -l build-essential > /dev/null 2>&1 || { \
+		echo "build-essential not found, installing..."; \
+		sudo apt update && sudo apt install -y build-essential; \
+	}
+	@echo "Setup complete!"
+
 run:
 	RUSTFLAGS='-C target-cpu=native' cargo run --release --bin system_perf -- -n 20
 run_multithread:

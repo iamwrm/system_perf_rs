@@ -137,11 +137,7 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
     let freq = tick_diff as f64 / nano_diff as f64;
     
     #[cfg(target_arch = "aarch64")]
-    let freq = {
-        // ARM64 timer runs at fixed frequency, not CPU frequency
-        // We estimate CPU freq by assuming reasonable instructions per cycle
-        let timer_freq_ghz = tick_diff as f64 / nano_diff as f64;
-        
+    {
         // Get the actual timer frequency from the register
         use timer::get_counter_frequency;
         let actual_timer_freq = get_counter_frequency() as f64 / 1_000_000_000.0;
@@ -153,20 +149,14 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
         let timer_ticks_per_second = tick_diff as f64 / time_elapsed_seconds;
         let cpu_freq_estimate = timer_ticks_per_second * (3.0 / actual_timer_freq); // rough estimate
         
-        println!("Timer freq: {:.2} GHz", actual_timer_freq);
         println!("Estimated CPU freq: {:.2} GHz", cpu_freq_estimate / 1_000_000_000.0);
-        
-        timer_freq_ghz
-    };
+    }
 
     println!("Nano Diff {}", nano_diff.to_formatted_string(&Locale::en));
     println!("Tick Diff {}", tick_diff.to_formatted_string(&Locale::en));
     
     #[cfg(target_arch = "x86_64")]
     println!("Base freq: {:.2} Ghz", freq);
-    
-    #[cfg(target_arch = "aarch64")]
-    println!("Timer rate: {:.2} Ghz", freq);
 }
 
 fn singlethread(n: i32, iter_time: u64) {
