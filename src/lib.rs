@@ -1,11 +1,16 @@
 pub mod taylor;
 pub mod timer;
 
-use std::{collections::BTreeMap, time::SystemTime};
+use std::time::SystemTime;
 
+#[cfg(not(target_arch = "wasm32"))]
+use std::collections::BTreeMap;
+
+#[cfg(not(target_arch = "wasm32"))]
 use core_affinity::{set_for_current, CoreId};
 use num_format::{Locale, ToFormattedString};
 
+#[cfg(not(target_arch = "wasm32"))]
 use timer::get_rdtsc;
 
 use std::hint::black_box;
@@ -91,12 +96,15 @@ fn geometric_mean(v: &[u128]) -> u128 {
     (product as f64).powf(1.0 / v.len() as f64) as u128
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn median(numbers: &[u128]) -> u128 {
     let mut nums = numbers.to_vec();
     nums.sort_unstable();
     nums[numbers.len() / 2]
 }
 
+/// Launch benchmark threads on specified CPU cores (native) or single-threaded (WASM)
+#[cfg(not(target_arch = "wasm32"))]
 pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
     let (start_tick, start_nanosec) = (get_rdtsc(), SystemTime::now());
 
@@ -118,30 +126,50 @@ pub fn launch_threads(n: i32, iter_time: u64, core_list: Option<Vec<usize>>) {
 
     #[cfg(target_arch = "x86_64")]
     let freq = tick_diff as f64 / nano_diff as f64;
-    
+
     #[cfg(target_arch = "aarch64")]
     {
         // Get the actual timer frequency from the register
         use timer::get_counter_frequency;
         let actual_timer_freq = get_counter_frequency() as f64 / 1_000_000_000.0;
-        
+
         // Estimate CPU frequency (timer ticks are not CPU cycles)
         // ARM64 typically runs at 1-4 GHz, timer at ~24 MHz
         // So ratio should be ~40-160x
         let time_elapsed_seconds = nano_diff as f64 / 1_000_000_000.0;
         let timer_ticks_per_second = tick_diff as f64 / time_elapsed_seconds;
         let cpu_freq_estimate = timer_ticks_per_second * (3.0 / actual_timer_freq); // rough estimate
-        
-        println!("Estimated CPU freq: {:.2} GHz", cpu_freq_estimate / 1_000_000_000.0);
+
+        println!(
+            "Estimated CPU freq: {:.2} GHz",
+            cpu_freq_estimate / 1_000_000_000.0
+        );
     }
 
     println!("Nano Diff {}", nano_diff.to_formatted_string(&Locale::en));
     println!("Tick Diff {}", tick_diff.to_formatted_string(&Locale::en));
-    
+
     #[cfg(target_arch = "x86_64")]
     println!("Base freq: {:.2} Ghz", freq);
 }
 
+/// Launch single-threaded benchmark (WASM version - no threading/CPU affinity support)
+#[cfg(target_arch = "wasm32")]
+pub fn launch_threads(n: i32, iter_time: u64, _core_list: Option<Vec<usize>>) {
+    let start_nanosec = SystemTime::now();
+
+    // WASM only supports single-threaded execution
+    compute_node(n, iter_time, true);
+
+    let nano_diff = SystemTime::now()
+        .duration_since(start_nanosec)
+        .unwrap()
+        .as_nanos();
+
+    println!("Nano Diff {}", nano_diff.to_formatted_string(&Locale::en));
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 fn multithread(core_list: Vec<usize>, n: i32, iter_time: u64) {
     let mut handles = vec![];
     for &core in core_list.iter() {
