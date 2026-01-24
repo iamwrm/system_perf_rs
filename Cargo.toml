@@ -11,6 +11,8 @@ clap = { version = "4.5.51", features = ["derive", "cargo"] }
 
 libm = "0.2.15"
 more-asserts = "0.3.1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 core_affinity = "0.8.3"
 
 
