@@ -1,3 +1,4 @@
+pub mod branch_prediction;
 pub mod taylor;
 pub mod timer;
 
