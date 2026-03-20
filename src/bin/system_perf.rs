@@ -1,5 +1,6 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
+use system_perf::branch_prediction::run_branch_prediction_benchmark;
 use system_perf::launch_threads;
 
 /// Simple program to greet a person
@@ -9,12 +10,25 @@ use system_perf::launch_threads;
 struct Args {
     /// Calculate to nth of the series sum
     #[clap(short, long, value_parser)]
-    n: i32,
+    n: Option<i32>,
     /// bench iterations
     #[clap(short, long, value_parser, default_value_t = 10_000_000u64)]
     iter_time: u64,
     #[clap(short, long)]
     cores: Option<String>,
+
+    #[clap(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Run branch prediction benchmark (Lemire)
+    BranchPrediction {
+        /// Maximum number of values to test (default: 1000000)
+        #[clap(short, long, default_value_t = 1_000_000)]
+        max_size: usize,
+    },
 }
 
 fn get_core_list(cores: &str) -> Vec<usize> {
@@ -46,11 +60,20 @@ fn test_get_core_list() {
 fn main() {
     let args = Args::parse();
 
-    dbg!(&args);
+    match args.command {
+        Some(Commands::BranchPrediction { max_size }) => {
+            run_branch_prediction_benchmark(max_size);
+        }
+        None => {
+            let n = args.n.expect("Error: -n is required when running the default Taylor series benchmark");
+            dbg!(&args.iter_time);
+            dbg!(&n);
 
-    println!("version: {}", clap::crate_version!());
+            println!("version: {}", clap::crate_version!());
 
-    let core_list = args.cores.map(|cores| get_core_list(&cores));
+            let core_list = args.cores.map(|cores| get_core_list(&cores));
 
-    launch_threads(args.n, args.iter_time, core_list);
+            launch_threads(n, args.iter_time, core_list);
+        }
+    }
 }
