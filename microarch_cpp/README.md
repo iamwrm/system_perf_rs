@@ -66,6 +66,39 @@ taskset -c 0 ./latency_probe 3
 
 Large working sets also include TLB miss and page-walk costs.
 
+### Example latency output
+
+This sample came from `deb1`, an Intel Core i5-12400F host with a 48 KiB L1D,
+1.25 MiB L2, and 18 MiB L3:
+
+```text
+Representative dependent-load latency on this run
+  L1-sized      32K:    1.187 ns/load
+  L2-sized     512K:    4.021 ns/load
+  L3-sized       8M:   17.416 ns/load
+  Large set    128M:  109.345 ns/load
+
+Braille latency graph, log2 x and y axes
+  114.70 │            ⠈                      ⠈                  ⠁   ⡀⢀⣀⡠⢴⠤⠤⠤⠤⢴│
+   80.31 │            ⠠                      ⠠                  ⠄⡠⠗⠉⠋⠁        │
+   56.23 │                                                     ⡤⠊             │
+   39.37 │            ⠈                      ⠈               ⣀⠎⠁⠁             │
+   27.57 │            ⠠                      ⠠             ⢀⠔⠃  ⠄             │
+   19.30 │                                           ⢀  ⣀⣀⡤⠊                  │
+   13.52 │            ⠈                      ⠈ ⢀⠼⠒⠒⠉⠉⠙⠉⠉  ⠁     ⠁             │
+    9.46 │            ⠠                      ⢠⠔⠁                ⠄             │
+    6.63 │                                ⢀⡠⡖⠁                                │
+    4.64 │            ⠈    ⢀ ⢀    ⡀ ⢀⣀⣀⡤⠔⠊⠁  ⠈                  ⠁             │
+    3.25 │            ⠠⢀⠼⠒⠉⠙⠉⠙⠉⠒⠗⠉⠋⠉⠁  ⠁     ⠠                  ⠄             │
+    2.27 │            ⡠⠊                                                      │
+    1.59 │          ⢀⠎⠈                      ⠈                  ⠁             │
+    1.12 │⠒⠒⠒⠒⠒⠒⠒⠒⠒⠺⠁ ⠠                      ⠠                  ⠄             │
+         └────────────────────────────────────────────────────────────────────┘
+                  ^ L1 48K              ^ L2 1.25M          ^ L3 18M
+          8K                                                              128M
+          working-set size, log2 scale
+```
+
 ## GEMM
 
 ```bash
@@ -89,6 +122,38 @@ which the combined storage for A, B, and C equals each cache capacity.
 
 This measures the included microkernel, not Accelerate, MKL, OpenBLAS, or
 another vendor library.
+
+### Example GEMM output
+
+Selected results from the same `deb1` host:
+
+```text
+     N   f32 GFLOP/s   int32 GOP/s
+ -----   -----------   -----------
+    16        116.68         60.10
+    64        108.16         58.89
+   128        100.79         56.23
+   256         79.83         54.97
+   512         61.39         42.54
+  1024         43.24         29.31
+  1536         39.75         24.10
+
+f32 GFLOP/s, shared linear y scale
+  123.42 │   ⣀⣀⣀⣄⡀            ⠈                        ⠁                  ⠈   │
+  110.26 │⠉⠉⠉   ⠁⠈⠉⠑⠺⠒⠒⠒⠒⠒⠗⠒⠢⠤⢴⠤⠤⠤⠤⠤⢴⠤⣀⣀ ⡀             ⠄                  ⠠   │
+   97.09 │                              ⠉⠓⠢⢄⡀                                 │
+   83.93 │                    ⠈             ⠈⠑⢲⠤⠤⣀⣀⣄⡀  ⠁                  ⠈   │
+   70.76 │                    ⠠                    ⠁⠈⠉⠉⠕⠒⠗⠤⢄⣀⢀            ⠠   │
+   57.60 │                                                   ⠙⠑⠒⠢⠤⢄⣄       ⡀  │
+   44.43 │                    ⠈                        ⠁           ⠁⠉⠑⠒⢴⠔⠒⠊⠓⠢⢤│
+   31.27 │                    ⠠                        ⠄                  ⠠  ⠈│
+   18.10 │                                                                    │
+    4.94 │                    ⠈                        ⠁                  ⠈   │
+         └────────────────────────────────────────────────────────────────────┘
+                           ^L1~N64                 ^L2~N330          ^L3~N1254
+          N=16                                                          N=1536
+          square matrix dimension N, log2 scale
+```
 
 ## Multiply-pipeline bubbles
 
@@ -156,6 +221,33 @@ The timeline displays dispatch, operand-ready, issue, completion, and retirement
 cycles. Those timings come from LLVM's scheduling model. The named LOAD, MUL,
 ALU, and BRANCH columns group operations for presentation; they are not a claim
 about exact physical port assignment.
+
+### Example modeled timeline
+
+This is the Alder Lake model for two iterations of
+`pipeline_example_x86.s`. A centered dot is an unused display lane. Interactive
+terminals also color each operation class.
+
+```text
+Modeled execution timeline
+target=alderlake, iterations=2, instructions=12, cycles=13, IPC=0.92
+
+ Cycle │  LOAD-0  │  LOAD-1  │ MUL/FMA  │  ALU-0   │  ALU-1   │  BRANCH  │  COMPLETES
+───────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────────
+     0 │    ·     │    ·     │    ·     │    ·     │    ·     │    ·     │      ·
+     1 │   L0.0   │   L1.0   │    ·     │   A4.0   │   A5.0   │    ·     │      ·
+     2 │   L0.1   │   L1.1   │    ·     │   A4.1   │   A5.1   │    ·     │  A4.0,A5.0
+     3 │    ·     │    ·     │    ·     │    ·     │    ·     │    ·     │  A4.1,A5.1
+     4 │    ·     │    ·     │    ·     │    ·     │    ·     │    ·     │      ·
+     5 │    ·     │    ·     │    ·     │    ·     │    ·     │    ·     │      ·
+     6 │    ·     │    ·     │   M2.0   │    ·     │    ·     │    ·     │  L0.0,L1.0
+     7 │    ·     │    ·     │   M2.1   │    ·     │    ·     │    ·     │  L0.1,L1.1
+     8 │    ·     │    ·     │    ·     │    ·     │    ·     │    ·     │      ·
+     9 │    ·     │    ·     │    ·     │   A3.0   │    ·     │    ·     │     M2.0
+    10 │    ·     │    ·     │    ·     │   A3.1   │    ·     │    ·     │  A3.0,M2.1
+    11 │    ·     │    ·     │    ·     │    ·     │    ·     │    ·     │     A3.1
+    12 │    ·     │    ·     │    ·     │    ·     │    ·     │    ·     │      ·
+```
 
 `llvm-mca` is a static model. It does not observe the runtime CPU, cache misses,
 branch mispredictions, OS scheduling, or Apple P-core and E-core migration.
