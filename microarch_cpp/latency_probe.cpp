@@ -335,7 +335,9 @@ void print_latency_graph(const std::vector<Result>& results,
             continue;
         }
         const int x = map_x(boundary);
-        for (int y = 0; y < canvas.pixel_height(); y += 6) canvas.set(x, y);
+        // Braille cells are four pixels tall. Keep every guide dot on the
+        // same sub-row so the marker stays in one terminal column.
+        for (int y = 0; y < canvas.pixel_height(); y += 4) canvas.set(x, y);
     }
 
     int previous_x = map_x(results.front().bytes);

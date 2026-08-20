@@ -163,9 +163,10 @@ def main() -> int:
     print("Issue slots by cycle. A centered dot is an unused display lane.\n")
 
     header = " Cycle │" + "│".join(centered(name, width) for name, _, _ in LANES)
-    header += "│" + centered("COMPLETES", 14)
+    header += "│" + centered("COMPLETES", 14) + "│"
     print(header)
-    print("───────┼" + "┼".join("─" * width for _ in LANES) + "┼" + "─" * 14)
+    print("───────┼" + "┼".join("─" * width for _ in LANES) +
+          "┼" + "─" * 14 + "┤")
 
     for cycle in range(last_cycle + 1):
         cells = []
@@ -181,7 +182,8 @@ def main() -> int:
                     label += f"+{len(operations) - lane_count}"
                 cells.append(colored_cell(label, width, kind, use_color))
         done = ",".join(op["label"] for op in completed.get(cycle, [])) or "·"
-        print(f" {cycle:5d} │" + "│".join(cells) + "│" + centered(done, 14))
+        print(f" {cycle:5d} │" + "│".join(cells) + "│" +
+              centered(done, 14) + "│")
 
     if max_observed > last_cycle:
         print(f" ... timeline clipped at cycle {last_cycle}; use --max-cycles 0 or a larger value")
