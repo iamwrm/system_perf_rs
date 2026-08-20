@@ -63,3 +63,9 @@ Score and ratio is for higher is better. USD/Hour is for lower is better.
 
 
 add ci
+
+## C++ microarchitecture experiments
+
+Standalone cache, pipeline, GEMM, PMU, and `llvm-mca` experiments live in
+[`microarch_cpp/`](microarch_cpp/README.md). They have their own Makefile and
+remain separate from the Rust CLI until the integration work is ready.

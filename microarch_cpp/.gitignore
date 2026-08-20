@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.trace/
+.DS_Store
+
+/gemm_bench
+/latency_probe
+/pipeline_probe
